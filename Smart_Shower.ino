@@ -1,13 +1,39 @@
-
-const int sensorPin = A0;
+const int sensorPin = A1;
 float sensorValue;
 float voltageOut;
 
+const int sensorPin_2 = A0;
+float sensorValue_2;
+float voltageOut_2;
+
 float temperatureC;
 float temperatureF;
-
-// uncomment if using LM335
 float temperatureK;
+
+float temperatureC_2;
+float temperatureF_2;
+float temperatureK_2;
+
+int Button_1 = 3;
+int Button_2 = 2;
+
+int Tracker_3 = 0;
+int Tracker_2 = 0;
+int Tracker_4 = 0;
+int Tracker_5 = 0;
+int Tracker_6 = 0;
+
+volatile boolean buttonState1 = HIGH;
+volatile boolean lastButtonState1 = HIGH;
+volatile unsigned long lastDebounceTime1 = 0;
+volatile unsigned long debounceDelay1 = 50;
+
+volatile boolean buttonState2 = HIGH;
+volatile boolean lastButtonState2 = HIGH;
+volatile unsigned long lastDebounceTime2 = 0;
+volatile unsigned long debounceDelay2 = 50;
+
+int Tracker_1 = 0;
 
 //temperature display Heater
 //digit 1 Heater
@@ -51,8 +77,11 @@ int f_4 = 42;
 int g_4 = 44;
 int dp_4 = 30;
 
+volatile int desiredOutputLevel = 0;
+
 void setup() {
   Serial.begin(9600);
+  Serial3.begin(9600);
 
   pinMode(sensorPin, INPUT);
   //digit 1
@@ -84,7 +113,7 @@ void setup() {
   pinMode(g_3, OUTPUT);
   pinMode(dp_3, OUTPUT);
 
-  //digit 2
+  //digit 4
   pinMode(a_4, OUTPUT);
   pinMode(b_4, OUTPUT);
   pinMode(c_4, OUTPUT);
@@ -94,84 +123,191 @@ void setup() {
   pinMode(g_4, OUTPUT);
   pinMode(dp_4, OUTPUT);
 
-  
+  //number_1_Digit_3();
+
+  pinMode(Button_1, INPUT_PULLUP);
+  pinMode(Button_2, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(Button_1), buttonInterrupt1_Service_1, FALLING);
+  attachInterrupt(digitalPinToInterrupt(Button_2), buttonInterrupt1_Service_2, FALLING);
 }
 
 void loop() {
+  buttonInterrupt1_Service_1();
+  buttonInterrupt1_Service_2();
   sensorValue = analogRead(sensorPin);
   voltageOut = (sensorValue * 5000) / 1024;
-
-  // calculate temperature for LM35 (LM35DZ)
-  // temperatureC = voltageOut / 10;
-  // temperatureF = (temperatureC * 1.8) + 32;
 
   // calculate temperature for LM335
   temperatureK = voltageOut / 10;
   temperatureC = temperatureK - 273;
   temperatureF = (temperatureC * 1.8) + 32;
 
-  Serial.print("Temperature(ºC): ");
-  Serial.print(temperatureC);
-  Serial.print("  Temperature(ºF): ");
-  Serial.print(temperatureF);
-  Serial.print("  Voltage(mV): ");
-  Serial.println(voltageOut);
-  delay(1000);
+  // Serial.print("Temperature(ºC): ");
+  // Serial.print(temperatureC);
+  // Serial.print("  Temperature(ºF): ");
+  // Serial.print(temperatureF);
+  // Serial.print("  Voltage(mV): ");
+  // Serial.println(voltageOut);
+  // delay(1000);
 
   int tensDigit = int(temperatureC / 10);              // Extract tens digit
   int onesDigit = int(temperatureC - tensDigit * 10);  // Extract ones digit
+
+  if (tensDigit == 0) {
+    number_0_Digit_1();
+  } else if (tensDigit == 1) {
+    number_1_Digit_1();
+  } else if (tensDigit == 2) {
+    number_2_Digit_1();
+  } else if (tensDigit == 3) {
+    number_3_Digit_1();
+  } else if (tensDigit == 4) {
+    number_4_Digit_1();
+  } else if (tensDigit == 5) {
+    number_5_Digit_1();
+  } else if (tensDigit == 6) {
+    number_6_Digit_1();
+  } else if (tensDigit == 7) {
+    number_7_Digit_1();
+  } else if (tensDigit == 8) {
+    number_8_Digit_1();
+  } else if (tensDigit == 9) {
+    number_9_Digit_1();
+  }
+
+  if (onesDigit == 0) {
+    number_0_Digit_2();
+  } else if (onesDigit == 1) {
+    number_1_Digit_2();
+  } else if (onesDigit == 2) {
+    number_2_Digit_2();
+  } else if (onesDigit == 3) {
+    number_3_Digit_2();
+  } else if (onesDigit == 4) {
+    number_4_Digit_2();
+  } else if (onesDigit == 5) {
+    number_5_Digit_2();
+  } else if (onesDigit == 6) {
+    number_6_Digit_2();
+  } else if (onesDigit == 7) {
+    number_7_Digit_2();
+  } else if (onesDigit == 8) {
+    number_8_Digit_2();
+  } else if (onesDigit == 9) {
+    number_9_Digit_2();
+  }
+  sensorValue_2 = analogRead(sensorPin_2);
+  voltageOut_2 = (sensorValue_2 * 5000) / 1024;
+
+
+  // calculate temperature for LM335
+  temperatureK_2 = voltageOut_2 / 10;
+  temperatureC_2 = temperatureK_2 - 273;
+  temperatureF_2 = (temperatureC_2 * 1.8) + 32;
+
+  int tensDigit_2 = int(temperatureC_2 / 10);                // Extract tens digit
+  int onesDigit_2 = int(temperatureC_2 - tensDigit_2 * 10);  // Extract ones digit
+
+  Serial.println(temperatureC_2);
+  delay(1000);
+  if (temperatureC_2 < 30.00 && Tracker_3 == 0) {
+    Serial.println("Temperature is Below 30 Degrees");
+    Serial3.println("1000");
+    delay(1000);
+    Tracker_2 = 0;
+    Tracker_3 = 1;
+    Tracker_4 = 0;
+    Tracker_5 = 0;
+    Tracker_6 = 0;
+  } else if (temperatureC_2 > 30.00 && temperatureC_2 < 40.00 && Tracker_2 == 0) {
+    Serial.println("Temperature is Below 40 Degrees and Above 30");
+    Serial3.println("2000");
+    delay(1000);
+    Tracker_3 = 0;
+    Tracker_2 = 1;
+    Tracker_4 = 0;
+    Tracker_5 = 0;
+    Tracker_6 = 0;
+  } else if (temperatureC_2 > 40.00 && temperatureC_2 < 50.00 && Tracker_4 == 0) {
+    Serial.println("Temperature is Below 50 Degrees and Above 40");
+    Serial3.println("3000");
+    delay(1000);
+    Tracker_4 = 1;
+    Tracker_5 = 0;
+    Tracker_3 = 0;
+    Tracker_2 = 0;
+    Tracker_6 = 0;
+  } else if (temperatureC_2 > 50.00 && temperatureC_2 < 60.00 && Tracker_5 == 0) {
+    Serial.println("Temperature is Below 60 Degrees and Above 50");
+    Serial3.println("4000");
+    delay(1000);
+    Tracker_4 = 0;
+    Tracker_5 = 1;
+    Tracker_3 = 0;
+    Tracker_2 = 0;
+    Tracker_6 = 0;
+  } else if (temperatureC_2 > 60.00 && Tracker_6 == 0) {
+    Serial.println("Temperature is Above 60");
+    Serial3.println("5000");
+    delay(1000);
+    Tracker_6 = 1;
+    Tracker_4 = 0;
+    Tracker_5 = 0;
+    Tracker_3 = 0;
+    Tracker_2 = 0;
+  }
 
   // Function to display a single digit on the 7-segment display (replace with your actual display function)
   // void displayDigit(int digit) {
   //   // Logic to light up the appropriate segments based on the digit (implement according to your display driver and connections)
   // }
-  if(tensDigit == 0){
-    number_0_Digit_1();
-  }else if(tensDigit == 1){
-    number_1_Digit_1();
-  }else if(tensDigit == 2){
-    number_2_Digit_1();
-  }else if(tensDigit == 3){
-    number_3_Digit_1();
-  }else if(tensDigit == 4){
-    number_4_Digit_1();
-  }else if(tensDigit == 5){
-    number_5_Digit_1();
-  }else if(tensDigit == 6){
-    number_6_Digit_1();
-  }else if(tensDigit == 7){
-    number_7_Digit_1();
-  }else if(tensDigit == 8){
-    number_8_Digit_1();
-  }else if(tensDigit == 9){
-    number_9_Digit_1();
+  if (tensDigit_2 == 0) {
+    number_0_Digit_3();
+  } else if (tensDigit_2 == 1) {
+    number_1_Digit_3();
+  } else if (tensDigit_2 == 2) {
+    number_2_Digit_3();
+  } else if (tensDigit_2 == 3) {
+    number_3_Digit_3();
+  } else if (tensDigit_2 == 4) {
+    number_4_Digit_3();
+  } else if (tensDigit_2 == 5) {
+    number_5_Digit_3();
+  } else if (tensDigit_2 == 6) {
+    number_6_Digit_3();
+  } else if (tensDigit_2 == 7) {
+    number_7_Digit_3();
+  } else if (tensDigit_2 == 8) {
+    number_8_Digit_3();
+  } else if (tensDigit_2 == 9) {
+    number_9_Digit_3();
   }
 
-  if(onesDigit == 0){
-    number_0_Digit_2();
-  }else if(onesDigit == 1){
-    number_1_Digit_2();
-  }else if(onesDigit == 2){
-    number_2_Digit_2();
-  }else if(onesDigit == 3){
-    number_3_Digit_2();
-  }else if(onesDigit == 4){
-    number_4_Digit_2();
-  }else if(onesDigit == 5){
-    number_5_Digit_2();
-  }else if(onesDigit == 6){
-    number_6_Digit_2();
-  }else if(onesDigit == 7){
-    number_7_Digit_2();
-  }else if(onesDigit == 8){
-    number_8_Digit_2();
-  }else if(onesDigit == 9){
-    number_9_Digit_2();
+  if (onesDigit_2 == 0) {
+    number_0_Digit_4();
+  } else if (onesDigit_2 == 1) {
+    number_1_Digit_4();
+  } else if (onesDigit_2 == 2) {
+    number_2_Digit_4();
+  } else if (onesDigit_2 == 3) {
+    number_3_Digit_4();
+  } else if (onesDigit_2 == 4) {
+    number_4_Digit_4();
+  } else if (onesDigit_2 == 5) {
+    number_5_Digit_4();
+  } else if (onesDigit_2 == 6) {
+    number_6_Digit_4();
+  } else if (onesDigit_2 == 7) {
+    number_7_Digit_4();
+  } else if (onesDigit_2 == 8) {
+    number_8_Digit_4();
+  } else if (onesDigit_2 == 9) {
+    number_9_Digit_4();
   }
-  
-  Serial.print(tensDigit);
-  Serial.print("    ");
-  Serial.println(onesDigit);
+  // Serial.print(tensDigit_2);
+  // Serial.print("    ");
+  // Serial.println(onesDigit_2);
   // // Display the separated digits
   // displayDigit(tensDigit);
   // displayDigit(onesDigit);
@@ -378,7 +514,7 @@ void number_0_Digit_2() {
   digitalWrite(g_2, LOW);
   digitalWrite(dp_2, LOW);
 }
-//digit 3 
+//digit 3
 void number_1_Digit_3() {
   digitalWrite(a_3, LOW);
   digitalWrite(b_3, HIGH);
@@ -579,4 +715,60 @@ void number_0_Digit_4() {
   digitalWrite(f_4, HIGH);
   digitalWrite(g_4, LOW);
   digitalWrite(dp_4, LOW);
+}
+
+void buttonInterrupt1_Service_1() {
+  if (millis() - lastDebounceTime1 > debounceDelay1) {
+    buttonState1 = digitalRead(Button_1);
+    if (buttonState1 == LOW && lastButtonState1 == HIGH) {
+      Serial.println("Button 1 Pressed!");
+      if (Tracker_1 == 0) {
+        Serial3.println("6000");
+        Tracker_1 = 1;
+      } else if (Tracker_1 == 1) {
+        Serial3.println("5000");
+        Tracker_1 = 2;
+      } else if (Tracker_1 == 2) {
+        Serial3.println("4000");
+        Tracker_1 = 3;
+      } else if (Tracker_1 == 3) {
+        Serial3.println("3000");
+        Tracker_1 = 4;
+      } else if (Tracker_1 == 4) {
+        Serial3.println("2000");
+        Tracker_1 = 5;
+      } else if (Tracker_1 == 5) {
+        Serial3.println("1000");
+        Tracker_1 = 0;
+      }
+    }
+    lastButtonState1 = buttonState1;
+    lastDebounceTime1 = millis();
+  }
+}
+void buttonInterrupt1_Service_2() {
+  if (millis() - lastDebounceTime2 > debounceDelay2) {
+    buttonState2 = digitalRead(Button_2);
+    if (buttonState2 == LOW && lastButtonState2 == HIGH) {
+      Serial.println("Button 2 Pressed!");
+      if (Tracker_1 == 1) {
+        Serial3.println("5000");
+        Tracker_1 = 2;
+      } else if (Tracker_1 == 2) {
+        Serial3.println("4000");
+        Tracker_1 = 3;
+      } else if (Tracker_1 == 3) {
+        Serial3.println("3000");
+        Tracker_1 = 4;
+      } else if (Tracker_1 == 4) {
+        Serial3.println("2000");
+        Tracker_1 = 5;
+      } else if (Tracker_1 == 5) {
+        Serial3.println("1000");
+        Tracker_1 = 0;
+      }
+    }
+    lastButtonState2 = buttonState2;
+    lastDebounceTime2 = millis();
+  }
 }
